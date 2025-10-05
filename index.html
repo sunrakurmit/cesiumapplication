@@ -188,10 +188,13 @@
                     hasPoint: !!entity.point,
                     hasPolyline: !!entity.polyline,
                     hasPolygon: !!entity.polygon,
+                    position: entity.position,
                     properties: entity.properties
                 });
 
-                if (entity.point) {
+                // Check if entity has position (indicates it's a point feature)
+                if (entity.position) {
+                    console.log(`Entity ${index} has position, creating point geometry`);
                     // Debug: Check what properties are available
                     console.log("Waypoint entity properties:", entity.properties);
                     console.log("Available property names:", entity.properties ? Object.keys(entity.properties._propertyNames || entity.properties) : "No properties");
@@ -269,6 +272,8 @@
 
                     // Required Component d: entity.point and PointGraphics
                     console.log("Applying styling - Name:", waypointName, "Color:", pointColor.toCssColorString());
+
+                    // Create point graphics for this waypoint
                     entity.point = new Cesium.PointGraphics({
                         pixelSize: pointSize,
                         color: pointColor,
@@ -276,7 +281,11 @@
                         outlineWidth: 2,
                         heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
                     });
+
                     console.log("Styling applied to entity:", entity.name);
+                } else {
+                    console.log(`Entity ${index} has no position - skipping`);
+                }
 
                     // Add label
                     entity.label = new Cesium.LabelGraphics({
