@@ -57,12 +57,12 @@
 
     <script>
         // =============================================================================
-        // ION ACCESS TOKEN (Required Component a)
+        // ION ACCESS TOKEN
         // =============================================================================
         Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkOTJmYzRiYi1jNDIxLTQ5NWQtYTJlNC1mMTM0YzZiOGIyY2EiLCJpZCI6MzI1OTI0LCJpYXQiOjE3NTM2NjgxMDJ9.0g_bqQG-v6HAP66sf-o1jHCozZw_jJ0tYLk9ZiEeFYg";
 
         // =============================================================================
-        // VIEWER SETUP (Required Component b)
+        // VIEWER SETUP
         // =============================================================================
         const viewer = new Cesium.Viewer("cesiumContainer", {
             terrainProvider: new Cesium.EllipsoidTerrainProvider(),
@@ -79,16 +79,6 @@
             vrButton: false
         });
 
-        // =============================================================================
-        // GOOGLE PHOTOREALISTIC 3D TILES - Temporarily disabled for troubleshooting
-        // =============================================================================
-        // try {
-        //     const googleTileset = await Cesium.createGooglePhotorealistic3DTileset();
-        //     viewer.scene.primitives.add(googleTileset);
-        //     console.log("Google Photorealistic 3D Tiles loaded successfully");
-        // } catch (error) {
-        //     console.warn("Could not load Google Photorealistic 3D Tiles:", error);
-        // }
 
         // Hide the credit container
         viewer._cesiumWidget._creditContainer.style.display = "none";
@@ -105,14 +95,14 @@
         let allEntities = [];
 
         // =============================================================================
-        // LOAD TRAIL DATA (Required Component c - GeoJsonDataSource)
+        // LOAD TRAIL DATA
         // =============================================================================
         async function loadTrailData() {
             try {
                 console.log("Starting trail data loading...");
                 document.getElementById('loading').innerHTML = 'Loading trail data...';
 
-                // Load main trail (Lilydale_to_Warburton_Rail_Trail) - Requirement b: thick white line
+                // Load main trail (Lilydale to Warburton Rail Trail)
                 console.log("Loading main trail from asset 3852793...");
                 const trailResource = await Cesium.IonResource.fromAssetId(3852793);
                 console.log("Trail resource created, loading GeoJSON...");
@@ -162,16 +152,16 @@
         }
 
         // =============================================================================
-        // STYLE TRAIL ENTITIES (Required Component d - entity.point and PointGraphics)
+        // STYLE TRAIL ENTITIES
         // =============================================================================
         function styleTrailEntities() {
             console.log("Styling trail entities...");
 
-            // Style trail lines - Requirement b: thick white line clamped to ground
+            // Style trail lines
             trailDataSource.entities.values.forEach(function(entity) {
                 if (entity.polyline) {
-                    entity.polyline.material = Cesium.Color.WHITE; // White color as required
-                    entity.polyline.width = 5; // Thick line as required
+                    entity.polyline.material = Cesium.Color.WHITE;
+                    entity.polyline.width = 5;
                     entity.name = "Lilydale to Warburton Rail Trail";
 
                     // Add description for click interaction
@@ -181,7 +171,7 @@
                 }
             });
 
-            // Style waypoint points - Requirement c: style based on Name attribute
+            // Style waypoint points
             console.log("Processing waypoint entities...");
             waypointDataSource.entities.values.forEach(function(entity, index) {
                 console.log(`Entity ${index}:`, {
@@ -225,11 +215,11 @@
                     console.log("Waypoint name (extracted):", actualWaypointName);
                     entity.name = actualWaypointName;
 
-                    // Style based on Name attribute - Using EXACT names from your data
+                    // Style based on waypoint names
                     let pointColor = Cesium.Color.YELLOW; // default
                     let pointSize = 10;
 
-                    // Requirement c: Different colors based on EXACT waypoint names
+                    // Different colors based on waypoint names
                     if (actualWaypointName === 'Car park') {
                         pointColor = Cesium.Color.GREY;
                         pointSize = 12;
@@ -274,7 +264,7 @@
                         pointSize = 12;
                     }
 
-                    // Required Component d: entity.point and PointGraphics
+                    // Create point graphics for waypoints
                     console.log("Applying styling - Name:", actualWaypointName, "Color:", pointColor.toCssColorString());
 
                     // Create point graphics for this waypoint
