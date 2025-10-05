@@ -57,12 +57,12 @@
 
     <script>
         // =============================================================================
-        // ION ACCESS TOKEN (Required Component a)
+        // ION ACCESS TOKEN 
         // =============================================================================
         Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkOTJmYzRiYi1jNDIxLTQ5NWQtYTJlNC1mMTM0YzZiOGIyY2EiLCJpZCI6MzI1OTI0LCJpYXQiOjE3NTM2NjgxMDJ9.0g_bqQG-v6HAP66sf-o1jHCozZw_jJ0tYLk9ZiEeFYg";
 
         // =============================================================================
-        // VIEWER SETUP (Required Component b)
+        // VIEWER SETUP
         // =============================================================================
         const viewer = new Cesium.Viewer("cesiumContainer", {
             terrainProvider: new Cesium.EllipsoidTerrainProvider(),
@@ -79,6 +79,17 @@
             vrButton: false
         });
 
+        // =============================================================================
+        // GOOGLE PHOTOREALISTIC 3D TILES
+        // =============================================================================
+        try {
+            const googleTileset = await Cesium.createGooglePhotorealistic3DTileset();
+            viewer.scene.primitives.add(googleTileset);
+            console.log("Google Photorealistic 3D Tiles loaded successfully");
+        } catch (error) {
+            console.warn("Could not load Google Photorealistic 3D Tiles:", error);
+        }
+
         // Hide the credit container
         viewer._cesiumWidget._creditContainer.style.display = "none";
 
@@ -94,20 +105,20 @@
         let allEntities = [];
 
         // =============================================================================
-        // LOAD TRAIL DATA (Required Component c - GeoJsonDataSource)
+        // LOAD TRAIL DATA
         // =============================================================================
         async function loadTrailData() {
             try {
                 document.getElementById('loading').style.display = 'none';
                 console.log("Loading main trail data...");
 
-                // Load main trail (Lilydale_to_Warburton_Rail_Trail)
+                // Load main trail (Lilydale_to_Warburton_Rail_Trail) - Requirement b: thick white line
                 const trailResource = await Cesium.IonResource.fromAssetId(3852793);
                 trailDataSource = await Cesium.GeoJsonDataSource.load(trailResource, {
                     clampToGround: true,
-                    stroke: Cesium.Color.ORANGE,
-                    strokeWidth: 3,
-                    fill: Cesium.Color.ORANGE.withAlpha(0.3)
+                    stroke: Cesium.Color.WHITE,
+                    strokeWidth: 5, // Thicker line as required
+                    fill: Cesium.Color.WHITE.withAlpha(0.3)
                 });
 
                 await viewer.dataSources.add(trailDataSource);
@@ -140,16 +151,16 @@
         }
 
         // =============================================================================
-        // STYLE TRAIL ENTITIES (Required Component d - entity.point and PointGraphics)
+        // STYLE TRAIL ENTITIES
         // =============================================================================
         function styleTrailEntities() {
             console.log("Styling trail entities...");
 
-            // Style trail lines
+            // Style trail lines - Requirement b: thick white line clamped to ground
             trailDataSource.entities.values.forEach(function(entity) {
                 if (entity.polyline) {
-                    entity.polyline.material = Cesium.Color.ORANGE;
-                    entity.polyline.width = 3;
+                    entity.polyline.material = Cesium.Color.WHITE; // White color as required
+                    entity.polyline.width = 5; // Thick line as required
                     entity.name = "Lilydale to Warburton Rail Trail";
 
                     // Add description for click interaction
@@ -159,19 +170,48 @@
                 }
             });
 
-            // Style waypoint points
+            // Style waypoint points - Requirement c: style based on Name attribute
             waypointDataSource.entities.values.forEach(function(entity) {
                 if (entity.point) {
+                    const waypointName = entity.properties?.name || "Unknown";
+                    entity.name = waypointName;
+
+                    // Style based on Name attribute
+                    let pointColor = Cesium.Color.YELLOW; // default
+                    let pointSize = 10;
+
+                    // Requirement c: Different colors based on waypoint type
+                    if (waypointName.toLowerCase().includes('car park')) {
+                        pointColor = Cesium.Color.GREY;
+                        pointSize = 12;
+                    } else if (waypointName.toLowerCase().includes('toilet')) {
+                        pointColor = Cesium.Color.BLUE;
+                        pointSize = 12;
+                    } else if (waypointName.toLowerCase().includes('picnic')) {
+                        pointColor = Cesium.Color.GREEN;
+                        pointSize = 12;
+                    } else if (waypointName.toLowerCase().includes('shelter')) {
+                        pointColor = Cesium.Color.BROWN;
+                        pointSize = 12;
+                    } else if (waypointName.toLowerCase().includes('water')) {
+                        pointColor = Cesium.Color.CYAN;
+                        pointSize = 12;
+                    } else if (waypointName.toLowerCase().includes('view') || waypointName.toLowerCase().includes('lookout')) {
+                        pointColor = Cesium.Color.PURPLE;
+                        pointSize = 12;
+                    } else if (waypointName.toLowerCase().includes('station') || waypointName.toLowerCase().includes('railway')) {
+                        pointColor = Cesium.Color.RED;
+                        pointSize = 12;
+                    }
+
                     // Required Component d: entity.point and PointGraphics
                     entity.point = new Cesium.PointGraphics({
-                        pixelSize: 10,
-                        color: Cesium.Color.YELLOW,
+                        pixelSize: pointSize,
+                        color: pointColor,
                         outlineColor: Cesium.Color.BLACK,
                         outlineWidth: 2,
                         heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
                     });
-
-                    entity.name = entity.properties?.name || "Trail Waypoint";
 
                     // Add label
                     entity.label = new Cesium.LabelGraphics({
