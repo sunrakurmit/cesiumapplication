@@ -182,7 +182,15 @@
             });
 
             // Style waypoint points - Requirement c: style based on Name attribute
-            waypointDataSource.entities.values.forEach(function(entity) {
+            console.log("Processing waypoint entities...");
+            waypointDataSource.entities.values.forEach(function(entity, index) {
+                console.log(`Entity ${index}:`, {
+                    hasPoint: !!entity.point,
+                    hasPolyline: !!entity.polyline,
+                    hasPolygon: !!entity.polygon,
+                    properties: entity.properties
+                });
+
                 if (entity.point) {
                     // Debug: Check what properties are available
                     console.log("Waypoint entity properties:", entity.properties);
