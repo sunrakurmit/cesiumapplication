@@ -287,7 +287,8 @@
                     console.log(`Entity ${index} has no position - skipping`);
                 }
 
-                    // Add label
+                // Add label to all entities (whether they have positions or not)
+                if (!entity.label) {
                     entity.label = new Cesium.LabelGraphics({
                         text: entity.name,
                         font: '12pt sans-serif',
@@ -299,8 +300,10 @@
                         pixelOffset: new Cesium.Cartesian2(0, -32),
                         show: false
                     });
+                }
 
-                    // Add description for click interaction
+                // Add description for click interaction to all entities
+                if (!entity.description) {
                     entity.description = new Cesium.CallbackProperty(function() {
                         return getWaypointDescription(entity);
                     }, false);
