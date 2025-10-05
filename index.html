@@ -218,60 +218,64 @@
                         }
                     }
 
-                    console.log("Waypoint name:", waypointName);
-                    entity.name = waypointName;
+                    console.log("Raw waypoint name object:", waypointName);
+
+                    // Extract the actual string value from Cesium Property object
+                    const actualWaypointName = waypointName._value || waypointName;
+                    console.log("Waypoint name (extracted):", actualWaypointName);
+                    entity.name = actualWaypointName;
 
                     // Style based on Name attribute - Using EXACT names from your data
                     let pointColor = Cesium.Color.YELLOW; // default
                     let pointSize = 10;
 
                     // Requirement c: Different colors based on EXACT waypoint names
-                    if (waypointName === 'Car park') {
+                    if (actualWaypointName === 'Car park') {
                         pointColor = Cesium.Color.GREY;
                         pointSize = 12;
-                    } else if (waypointName === 'Picnic table') {
+                    } else if (actualWaypointName === 'Picnic table') {
                         pointColor = Cesium.Color.GREEN;
                         pointSize = 12;
-                    } else if (waypointName === 'Bridge') {
+                    } else if (actualWaypointName === 'Bridge') {
                         pointColor = Cesium.Color.BROWN;
                         pointSize = 12;
-                    } else if (waypointName === 'Long Wooden Bridge') {
+                    } else if (actualWaypointName === 'Long Wooden Bridge') {
                         pointColor = Cesium.Color.BROWN;
                         pointSize = 12;
-                    } else if (waypointName.includes('Cafe')) {
+                    } else if (actualWaypointName.includes('Cafe')) {
                         pointColor = Cesium.Color.ORANGE;
                         pointSize = 12;
-                    } else if (waypointName === 'Home Hotel') {
+                    } else if (actualWaypointName === 'Home Hotel') {
                         pointColor = Cesium.Color.RED;
                         pointSize = 12;
-                    } else if (waypointName === 'Historical Information') {
+                    } else if (actualWaypointName === 'Historical Information') {
                         pointColor = Cesium.Color.MAGENTA;
                         pointSize = 12;
-                    } else if (waypointName === 'Information') {
+                    } else if (actualWaypointName === 'Information') {
                         pointColor = Cesium.Color.BLUE;
                         pointSize = 12;
-                    } else if (waypointName.includes('Station')) {
+                    } else if (actualWaypointName.includes('Station')) {
                         pointColor = Cesium.Color.RED;
                         pointSize = 12;
-                    } else if (waypointName === 'Playground') {
+                    } else if (actualWaypointName === 'Playground') {
                         pointColor = Cesium.Color.LIME;
                         pointSize = 12;
-                    } else if (waypointName === 'Tunnel') {
+                    } else if (actualWaypointName === 'Tunnel') {
                         pointColor = Cesium.Color.DARKGRAY;
                         pointSize = 12;
-                    } else if (waypointName === 'Upper Yarra Museum') {
+                    } else if (actualWaypointName === 'Upper Yarra Museum') {
                         pointColor = Cesium.Color.PURPLE;
                         pointSize = 12;
-                    } else if (waypointName.includes('Toilet')) {
+                    } else if (actualWaypointName.includes('Toilet')) {
                         pointColor = Cesium.Color.BLUE;
                         pointSize = 12;
-                    } else if (waypointName === 'Water (drinking tap)') {
+                    } else if (actualWaypointName === 'Water (drinking tap)') {
                         pointColor = Cesium.Color.CYAN;
                         pointSize = 12;
                     }
 
                     // Required Component d: entity.point and PointGraphics
-                    console.log("Applying styling - Name:", waypointName, "Color:", pointColor.toCssColorString());
+                    console.log("Applying styling - Name:", actualWaypointName, "Color:", pointColor.toCssColorString());
 
                     // Create point graphics for this waypoint
                     entity.point = new Cesium.PointGraphics({
