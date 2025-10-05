@@ -27,6 +27,9 @@
             console.log("Cesium script loaded");
             document.getElementById('status').innerHTML = 'Cesium loaded, initializing viewer...';
 
+            // Set your access token BEFORE creating viewer
+            Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkOTJmYzRiYi1jNDIxLTQ5NWQtYTJlNC1mMTM0YzZiOGIyY2EiLCJpZCI6MzI1OTI0LCJpYXQiOjE3NTM2NjgxMDJ9.0g_bqQG-v6HAP66sf-o1jHCozZw_jJ0tYLk9ZiEeFYg";
+
             // Step 3: Initialize viewer
             try {
                 const viewer = new Cesium.Viewer('cesiumContainer', {
