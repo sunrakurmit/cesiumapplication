@@ -30,7 +30,7 @@
             // Step 3: Initialize viewer
             try {
                 const viewer = new Cesium.Viewer('cesiumContainer', {
-                    terrainProvider: Cesium.createWorldTerrain(),
+                    terrainProvider: new Cesium.EllipsoidTerrainProvider(),
                     scene3DOnly: true
                 });
 
