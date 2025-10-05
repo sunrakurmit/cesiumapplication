@@ -80,15 +80,15 @@
         });
 
         // =============================================================================
-        // GOOGLE PHOTOREALISTIC 3D TILES (Required Component a enhancement)
+        // GOOGLE PHOTOREALISTIC 3D TILES - Temporarily disabled for troubleshooting
         // =============================================================================
-        try {
-            const googleTileset = await Cesium.createGooglePhotorealistic3DTileset();
-            viewer.scene.primitives.add(googleTileset);
-            console.log("Google Photorealistic 3D Tiles loaded successfully");
-        } catch (error) {
-            console.warn("Could not load Google Photorealistic 3D Tiles:", error);
-        }
+        // try {
+        //     const googleTileset = await Cesium.createGooglePhotorealistic3DTileset();
+        //     viewer.scene.primitives.add(googleTileset);
+        //     console.log("Google Photorealistic 3D Tiles loaded successfully");
+        // } catch (error) {
+        //     console.warn("Could not load Google Photorealistic 3D Tiles:", error);
+        // }
 
         // Hide the credit container
         viewer._cesiumWidget._creditContainer.style.display = "none";
@@ -109,11 +109,13 @@
         // =============================================================================
         async function loadTrailData() {
             try {
-                document.getElementById('loading').style.display = 'none';
-                console.log("Loading main trail data...");
+                console.log("Starting trail data loading...");
+                document.getElementById('loading').innerHTML = 'Loading trail data...';
 
                 // Load main trail (Lilydale_to_Warburton_Rail_Trail) - Requirement b: thick white line
+                console.log("Loading main trail from asset 3852793...");
                 const trailResource = await Cesium.IonResource.fromAssetId(3852793);
+                console.log("Trail resource created, loading GeoJSON...");
                 trailDataSource = await Cesium.GeoJsonDataSource.load(trailResource, {
                     clampToGround: true,
                     stroke: Cesium.Color.WHITE,
@@ -121,27 +123,36 @@
                     fill: Cesium.Color.WHITE.withAlpha(0.3)
                 });
 
+                console.log("Trail GeoJSON loaded, adding to viewer...");
                 await viewer.dataSources.add(trailDataSource);
-                console.log("Main trail loaded successfully");
+                console.log("Main trail loaded successfully, entities:", trailDataSource.entities.values.length);
 
                 // Load waypoints (Lilydale_to_Warburton_Rail_Trail_waypoints)
-                console.log("Loading waypoint data...");
+                console.log("Loading waypoints from asset 3852794...");
                 const waypointResource = await Cesium.IonResource.fromAssetId(3852794);
+                console.log("Waypoint resource created, loading GeoJSON...");
                 waypointDataSource = await Cesium.GeoJsonDataSource.load(waypointResource, {
                     clampToGround: true
                 });
 
+                console.log("Waypoint GeoJSON loaded, adding to viewer...");
                 await viewer.dataSources.add(waypointDataSource);
-                console.log("Waypoints loaded successfully");
+                console.log("Waypoints loaded successfully, entities:", waypointDataSource.entities.values.length);
 
                 // Combine all entities for easier management
                 allEntities = [...trailDataSource.entities.values, ...waypointDataSource.entities.values];
+                console.log("Total entities loaded:", allEntities.length);
 
                 // Apply styling and interactions
+                console.log("Applying styling to entities...");
                 styleTrailEntities();
 
                 // Zoom to show all trails
+                console.log("Zooming to trails...");
                 await viewer.zoomTo(trailDataSource);
+
+                console.log("Trail data loading completed successfully!");
+                document.getElementById('loading').style.display = 'none';
 
             } catch (error) {
                 console.error("Error loading trail data:", error);
