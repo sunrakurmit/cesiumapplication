@@ -1,61 +1,287 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Cesium Debug Test</title>
     <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+    <title>3D Interactive Walking & Cycling Trails</title>
+
+    <!-- Preconnect to Cesium CDN for better performance -->
+    <link rel="preconnect" href="https://cesium.com">
+    <link rel="preconnect" href="https://api.cesium.com">
+
+    <!-- Cesium CSS -->
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.118/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+
     <style>
-        body { margin: 0; font-family: Arial, sans-serif; }
-        #cesiumContainer { width: 100%; height: 100vh; }
-        #status { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 10px; z-index: 1000; }
+        html, body, #cesiumContainer {
+            width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
+            font-family: sans-serif; background: #000;
+        }
+        #toolbar {
+            position: absolute; top: 10px; left: 10px; z-index: 1000;
+            background: rgba(42, 42, 42, 0.8); padding: 10px; border-radius: 5px;
+        }
+        .trail-info {
+            color: white; margin: 5px 0;
+        }
+        .button {
+            background: #007bff; color: white; border: none; padding: 8px 12px;
+            margin: 2px; border-radius: 4px; cursor: pointer;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        #loading {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: white; font-size: 18px; z-index: 1000;
+        }
     </style>
 </head>
 <body>
-    <div id="status">Loading Cesium...</div>
-    <div id="cesiumContainer"></div>
+    <div id="cesiumContainer">
+        <div id="loading">Loading 3D Trail Viewer...</div>
+        <div id="toolbar">
+            <div class="trail-info">
+                <strong>Lilydale to Warburton Rail Trail</strong><br>
+                Interactive 3D Trail Visualization
+            </div>
+            <button class="button" onclick="toggleTrails()">Toggle Trails</button>
+            <button class="button" onclick="flyToTrails()">View Trails</button>
+            <button class="button" onclick="toggleWaypoints()">Toggle Waypoints</button>
+        </div>
+    </div>
+
+    <!-- Load Cesium BEFORE any other scripts -->
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.118/Build/Cesium/Cesium.js"></script>
 
     <script>
-        // Step 1: Test if script loads
-        console.log("Script started loading");
+        // =============================================================================
+        // ION ACCESS TOKEN (Required Component a)
+        // =============================================================================
+        Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkOTJmYzRiYi1jNDIxLTQ5NWQtYTJlNC1mMTM0YzZiOGIyY2EiLCJpZCI6MzI1OTI0LCJpYXQiOjE3NTM2NjgxMDJ9.0g_bqQG-v6HAP66sf-o1jHCozZw_jJ0tYLk9ZiEeFYg";
 
-        // Step 2: Check if Cesium exists
-        document.getElementById('status').innerHTML = 'Checking Cesium library...';
+        // =============================================================================
+        // VIEWER SETUP (Required Component b)
+        // =============================================================================
+        const viewer = new Cesium.Viewer("cesiumContainer", {
+            terrainProvider: new Cesium.EllipsoidTerrainProvider(),
+            scene3DOnly: true,
+            selectionIndicator: false,
+            baseLayerPicker: false,
+            geocoder: false,
+            homeButton: false,
+            sceneModePicker: false,
+            navigationHelpButton: false,
+            animation: false,
+            timeline: false,
+            fullscreenButton: false,
+            vrButton: false
+        });
 
-        // Load Cesium
-        const script = document.createElement('script');
-        script.src = 'https://cesium.com/downloads/cesiumjs/releases/1.118/Build/Cesium/Cesium.js';
-        script.onload = function() {
-            console.log("Cesium script loaded");
-            document.getElementById('status').innerHTML = 'Cesium loaded, initializing viewer...';
+        // Hide the credit container
+        viewer._cesiumWidget._creditContainer.style.display = "none";
 
-            // Set your access token BEFORE creating viewer
-            Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkOTJmYzRiYi1jNDIxLTQ5NWQtYTJlNC1mMTM0YzZiOGIyY2EiLCJpZCI6MzI1OTI0LCJpYXQiOjE3NTM2NjgxMDJ9.0g_bqQG-v6HAP66sf-o1jHCozZw_jJ0tYLk9ZiEeFYg";
+        // Enable terrain depth testing for better visualization
+        viewer.scene.globe.depthTestAgainstTerrain = true;
+        viewer.scene.globe.enableLighting = true;
 
-            // Step 3: Initialize viewer
+        // =============================================================================
+        // GLOBAL VARIABLES
+        // =============================================================================
+        let trailDataSource = null;
+        let waypointDataSource = null;
+        let allEntities = [];
+
+        // =============================================================================
+        // LOAD TRAIL DATA (Required Component c - GeoJsonDataSource)
+        // =============================================================================
+        async function loadTrailData() {
             try {
-                const viewer = new Cesium.Viewer('cesiumContainer', {
-                    terrainProvider: new Cesium.EllipsoidTerrainProvider(),
-                    scene3DOnly: true
+                document.getElementById('loading').style.display = 'none';
+                console.log("Loading main trail data...");
+
+                // Load main trail (Lilydale_to_Warburton_Rail_Trail)
+                const trailResource = await Cesium.IonResource.fromAssetId(3852793);
+                trailDataSource = await Cesium.GeoJsonDataSource.load(trailResource, {
+                    clampToGround: true,
+                    stroke: Cesium.Color.ORANGE,
+                    strokeWidth: 3,
+                    fill: Cesium.Color.ORANGE.withAlpha(0.3)
                 });
 
-                document.getElementById('status').innerHTML = 'Cesium viewer created successfully!';
+                await viewer.dataSources.add(trailDataSource);
+                console.log("Main trail loaded successfully");
 
-                // Hide status after 3 seconds
-                setTimeout(() => {
-                    document.getElementById('status').style.display = 'none';
-                }, 3000);
+                // Load waypoints (Lilydale_to_Warburton_Rail_Trail_waypoints)
+                console.log("Loading waypoint data...");
+                const waypointResource = await Cesium.IonResource.fromAssetId(3852794);
+                waypointDataSource = await Cesium.GeoJsonDataSource.load(waypointResource, {
+                    clampToGround: true
+                });
+
+                await viewer.dataSources.add(waypointDataSource);
+                console.log("Waypoints loaded successfully");
+
+                // Combine all entities for easier management
+                allEntities = [...trailDataSource.entities.values, ...waypointDataSource.entities.values];
+
+                // Apply styling and interactions
+                styleTrailEntities();
+
+                // Zoom to show all trails
+                await viewer.zoomTo(trailDataSource);
 
             } catch (error) {
-                console.error("Error creating viewer:", error);
-                document.getElementById('status').innerHTML = 'Error: ' + error.message;
+                console.error("Error loading trail data:", error);
+                document.getElementById('loading').innerHTML = 'Error loading trails: ' + error.message;
+                document.getElementById('loading').style.display = 'block';
             }
-        };
+        }
 
-        script.onerror = function() {
-            console.error("Failed to load Cesium script");
-            document.getElementById('status').innerHTML = 'Failed to load Cesium library';
-        };
+        // =============================================================================
+        // STYLE TRAIL ENTITIES (Required Component d - entity.point and PointGraphics)
+        // =============================================================================
+        function styleTrailEntities() {
+            console.log("Styling trail entities...");
 
-        document.head.appendChild(script);
+            // Style trail lines
+            trailDataSource.entities.values.forEach(function(entity) {
+                if (entity.polyline) {
+                    entity.polyline.material = Cesium.Color.ORANGE;
+                    entity.polyline.width = 3;
+                    entity.name = "Lilydale to Warburton Rail Trail";
+
+                    // Add description for click interaction
+                    entity.description = new Cesium.CallbackProperty(function() {
+                        return getTrailDescription(entity);
+                    }, false);
+                }
+            });
+
+            // Style waypoint points
+            waypointDataSource.entities.values.forEach(function(entity) {
+                if (entity.point) {
+                    // Required Component d: entity.point and PointGraphics
+                    entity.point = new Cesium.PointGraphics({
+                        pixelSize: 10,
+                        color: Cesium.Color.YELLOW,
+                        outlineColor: Cesium.Color.BLACK,
+                        outlineWidth: 2,
+                        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                    });
+
+                    entity.name = entity.properties?.name || "Trail Waypoint";
+
+                    // Add label
+                    entity.label = new Cesium.LabelGraphics({
+                        text: entity.name,
+                        font: '12pt sans-serif',
+                        fillColor: Cesium.Color.WHITE,
+                        outlineColor: Cesium.Color.BLACK,
+                        outlineWidth: 1,
+                        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                        pixelOffset: new Cesium.Cartesian2(0, -32),
+                        show: false
+                    });
+
+                    // Add description for click interaction
+                    entity.description = new Cesium.CallbackProperty(function() {
+                        return getWaypointDescription(entity);
+                    }, false);
+                }
+            });
+
+            console.log("Trail entities styled successfully");
+        }
+
+        // =============================================================================
+        // TRAIL DESCRIPTION FUNCTIONS
+        // =============================================================================
+        function getTrailDescription(entity) {
+            return `
+                <h3>${entity.name || 'Lilydale to Warburton Rail Trail'}</h3>
+                <p><strong>Type:</strong> Rail Trail</p>
+                <p><strong>Activity:</strong> Walking and Cycling</p>
+                <p><strong>Surface:</strong> Sealed path</p>
+                <p><strong>Description:</strong> A popular rail trail following the former railway line from Lilydale to Warburton, offering scenic views through the Yarra Valley.</p>
+                <p><strong>Length:</strong> Approximately 38 km</p>
+                <p><strong>Difficulty:</strong> Easy to Moderate</p>
+            `;
+        }
+
+        function getWaypointDescription(entity) {
+            const properties = entity.properties || {};
+            return `
+                <h3>${entity.name}</h3>
+                <p><strong>Type:</strong> ${properties.type || 'Waypoint'}</p>
+                <p><strong>Elevation:</strong> ${properties.elevation ? Math.round(properties.elevation) + 'm' : 'Unknown'}</p>
+                <p>${properties.description || 'A point of interest along the trail'}</p>
+            `;
+        }
+
+        // =============================================================================
+        // INTERACTIVE FUNCTIONS
+        // =============================================================================
+        function toggleTrails() {
+            if (trailDataSource) {
+                trailDataSource.entities.values.forEach(function(entity) {
+                    entity.show = !entity.show;
+                });
+                console.log("Trails toggled");
+            }
+        }
+
+        function toggleWaypoints() {
+            if (waypointDataSource) {
+                waypointDataSource.entities.values.forEach(function(entity) {
+                    entity.show = !entity.show;
+                });
+                console.log("Waypoints toggled");
+            }
+        }
+
+        function flyToTrails() {
+            if (trailDataSource) {
+                viewer.flyTo(trailDataSource.entities.values, {
+                    offset: new Cesium.HeadingPitchRange(0, -0.5, 0)
+                });
+            }
+        }
+
+        // =============================================================================
+        // ENTITY SELECTION AND INFORMATION DISPLAY
+        // =============================================================================
+        viewer.selectedEntityChanged.addEventListener(function(selectedEntity) {
+            // Hide all labels first
+            allEntities.forEach(function(entity) {
+                if (entity.label) {
+                    entity.label.show = false;
+                }
+            });
+
+            // Show label for selected entity
+            if (selectedEntity && selectedEntity.label) {
+                selectedEntity.label.show = true;
+            }
+        });
+
+        // =============================================================================
+        // INITIALIZATION
+        // =============================================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Initializing trail application...");
+            loadTrailData();
+        });
+
+        // =============================================================================
+        // ERROR HANDLING
+        // =============================================================================
+        window.addEventListener('error', function(e) {
+            console.error('Application error:', e.error);
+            document.getElementById('loading').innerHTML = 'Application error: ' + e.error.message;
+        });
     </script>
 </body>
 </html>
