@@ -57,12 +57,12 @@
 
     <script>
         // =============================================================================
-        // ION ACCESS TOKEN 
+        // ION ACCESS TOKEN (Required Component a)
         // =============================================================================
         Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkOTJmYzRiYi1jNDIxLTQ5NWQtYTJlNC1mMTM0YzZiOGIyY2EiLCJpZCI6MzI1OTI0LCJpYXQiOjE3NTM2NjgxMDJ9.0g_bqQG-v6HAP66sf-o1jHCozZw_jJ0tYLk9ZiEeFYg";
 
         // =============================================================================
-        // VIEWER SETUP
+        // VIEWER SETUP (Required Component b)
         // =============================================================================
         const viewer = new Cesium.Viewer("cesiumContainer", {
             terrainProvider: new Cesium.EllipsoidTerrainProvider(),
@@ -80,7 +80,7 @@
         });
 
         // =============================================================================
-        // GOOGLE PHOTOREALISTIC 3D TILES
+        // GOOGLE PHOTOREALISTIC 3D TILES (Required Component a enhancement)
         // =============================================================================
         try {
             const googleTileset = await Cesium.createGooglePhotorealistic3DTileset();
@@ -105,7 +105,7 @@
         let allEntities = [];
 
         // =============================================================================
-        // LOAD TRAIL DATA
+        // LOAD TRAIL DATA (Required Component c - GeoJsonDataSource)
         // =============================================================================
         async function loadTrailData() {
             try {
@@ -151,7 +151,7 @@
         }
 
         // =============================================================================
-        // STYLE TRAIL ENTITIES
+        // STYLE TRAIL ENTITIES (Required Component d - entity.point and PointGraphics)
         // =============================================================================
         function styleTrailEntities() {
             console.log("Styling trail entities...");
@@ -176,31 +176,51 @@
                     const waypointName = entity.properties?.name || "Unknown";
                     entity.name = waypointName;
 
-                    // Style based on Name attribute
+                    // Style based on Name attribute - Updated for actual waypoint names
                     let pointColor = Cesium.Color.YELLOW; // default
                     let pointSize = 10;
 
                     // Requirement c: Different colors based on waypoint type
-                    if (waypointName.toLowerCase().includes('car park')) {
+                    const nameLower = waypointName.toLowerCase();
+
+                    if (nameLower.includes('car park')) {
                         pointColor = Cesium.Color.GREY;
                         pointSize = 12;
-                    } else if (waypointName.toLowerCase().includes('toilet')) {
+                    } else if (nameLower.includes('toilet')) {
                         pointColor = Cesium.Color.BLUE;
                         pointSize = 12;
-                    } else if (waypointName.toLowerCase().includes('picnic')) {
+                    } else if (nameLower.includes('picnic')) {
                         pointColor = Cesium.Color.GREEN;
                         pointSize = 12;
-                    } else if (waypointName.toLowerCase().includes('shelter')) {
+                    } else if (nameLower.includes('bridge')) {
                         pointColor = Cesium.Color.BROWN;
                         pointSize = 12;
-                    } else if (waypointName.toLowerCase().includes('water')) {
-                        pointColor = Cesium.Color.CYAN;
+                    } else if (nameLower.includes('cafe')) {
+                        pointColor = Cesium.Color.ORANGE;
                         pointSize = 12;
-                    } else if (waypointName.toLowerCase().includes('view') || waypointName.toLowerCase().includes('lookout')) {
+                    } else if (nameLower.includes('hotel')) {
+                        pointColor = Cesium.Color.RED;
+                        pointSize = 12;
+                    } else if (nameLower.includes('station')) {
+                        pointColor = Cesium.Color.RED;
+                        pointSize = 12;
+                    } else if (nameLower.includes('playground')) {
+                        pointColor = Cesium.Color.LIME;
+                        pointSize = 12;
+                    } else if (nameLower.includes('tunnel')) {
+                        pointColor = Cesium.Color.DARKGRAY;
+                        pointSize = 12;
+                    } else if (nameLower.includes('museum')) {
                         pointColor = Cesium.Color.PURPLE;
                         pointSize = 12;
-                    } else if (waypointName.toLowerCase().includes('station') || waypointName.toLowerCase().includes('railway')) {
-                        pointColor = Cesium.Color.RED;
+                    } else if (nameLower.includes('water')) {
+                        pointColor = Cesium.Color.CYAN;
+                        pointSize = 12;
+                    } else if (nameLower.includes('information') || nameLower.includes('info')) {
+                        pointColor = Cesium.Color.BLUE;
+                        pointSize = 12;
+                    } else if (nameLower.includes('historical')) {
+                        pointColor = Cesium.Color.MAGENTA;
                         pointSize = 12;
                     }
 
