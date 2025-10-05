@@ -1,91 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
+    <title>Cesium Debug Test</title>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
-    <title>Basic Trail Viewer</title>
-    <script src="https://cesium.com/downloads/cesiumjs/releases/1.118/Build/Cesium/Cesium.js"></script>
-    <link href="https://cesium.com/downloads/cesiumjs/releases/1.118/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
     <style>
-        html, body, #cesiumContainer {
-            width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
-        }
-        #loading {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: white; font-size: 20px; z-index: 1000;
-        }
+        body { margin: 0; font-family: Arial, sans-serif; }
+        #cesiumContainer { width: 100%; height: 100vh; }
+        #status { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 10px; z-index: 1000; }
     </style>
 </head>
 <body>
+    <div id="status">Loading Cesium...</div>
     <div id="cesiumContainer"></div>
-    <div id="loading">Loading trails...</div>
 
     <script>
-        // Basic Cesium setup
-        const viewer = new Cesium.Viewer("cesiumContainer", {
-            terrainProvider: Cesium.createWorldTerrain(),
-            scene3DOnly: true,
-            selectionIndicator: false,
-            baseLayerPicker: false,
-            geocoder: false,
-            homeButton: false,
-            sceneModePicker: false,
-            navigationHelpButton: false,
-            animation: false,
-            timeline: false,
-            fullscreenButton: false,
-            vrButton: false
-        });
+        // Step 1: Test if script loads
+        console.log("Script started loading");
 
-        // Hide credit container
-        viewer._cesiumWidget._creditContainer.style.display = "none";
+        // Step 2: Check if Cesium exists
+        document.getElementById('status').innerHTML = 'Checking Cesium library...';
 
-        // Set up terrain and globe
-        viewer.scene.globe.depthTestAgainstTerrain = true;
+        // Load Cesium
+        const script = document.createElement('script');
+        script.src = 'https://cesium.com/downloads/cesiumjs/releases/1.118/Build/Cesium/Cesium.js';
+        script.onload = function() {
+            console.log("Cesium script loaded");
+            document.getElementById('status').innerHTML = 'Cesium loaded, initializing viewer...';
 
-        // Your Cesium Ion access token
-        Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkOTJmYzRiYi1jNDIxLTQ5NWQtYTJlNC1mMTM0YzZiOGIyY2EiLCJpZCI6MzI1OTI0LCJpYXQiOjE3NTM2NjgxMDJ9.0g_bqQG-v6HAP66sf-o1jHCozZw_jJ0tYLk9ZiEeFYg";
-
-        // Load trail data
-        async function loadTrails() {
+            // Step 3: Initialize viewer
             try {
-                // Remove loading message
-                document.getElementById('loading').style.display = 'none';
-
-                console.log("Loading waypoints...");
-                // Lilydale_to_Warburton_Rail_Trail_waypoints
-                const waypointsResource = await Cesium.IonResource.fromAssetId(3852794);
-                const waypointsSource = await Cesium.GeoJsonDataSource.load(waypointsResource, {
-                    clampToGround: true,
-                    stroke: Cesium.Color.YELLOW,
-                    strokeWidth: 3,
+                const viewer = new Cesium.Viewer('cesiumContainer', {
+                    terrainProvider: Cesium.createWorldTerrain(),
+                    scene3DOnly: true
                 });
-                await viewer.dataSources.add(waypointsSource);
-                console.log("Waypoints loaded");
 
-                console.log("Loading main trail...");
-                // Lilydale_to_Warburton_Rail_Trail
-                const trailResource = await Cesium.IonResource.fromAssetId(3852793);
-                const trailSource = await Cesium.GeoJsonDataSource.load(trailResource, {
-                    clampToGround: true,
-                    stroke: Cesium.Color.ORANGE,
-                    strokeWidth: 3,
-                });
-                await viewer.dataSources.add(trailSource);
+                document.getElementById('status').innerHTML = 'Cesium viewer created successfully!';
 
-                // Zoom to show all trails
-                await viewer.zoomTo(trailSource);
-                console.log("Trails loaded successfully");
+                // Hide status after 3 seconds
+                setTimeout(() => {
+                    document.getElementById('status').style.display = 'none';
+                }, 3000);
 
             } catch (error) {
-                console.error("Error loading trails:", error);
-                document.getElementById('loading').innerHTML = 'Error loading trails: ' + error.message;
+                console.error("Error creating viewer:", error);
+                document.getElementById('status').innerHTML = 'Error: ' + error.message;
             }
-        }
+        };
 
-        // Initialize when page loads
-        loadTrails();
+        script.onerror = function() {
+            console.error("Failed to load Cesium script");
+            document.getElementById('status').innerHTML = 'Failed to load Cesium library';
+        };
+
+        document.head.appendChild(script);
     </script>
 </body>
 </html>
